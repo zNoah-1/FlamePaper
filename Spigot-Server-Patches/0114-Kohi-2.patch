@@ -1,0 +1,71 @@
+diff --git a/src/main/java/net/minecraft/server/EntityHuman.java b/src/main/java/net/minecraft/server/EntityHuman.java
+index 4f024cf..547421b 100644
+--- a/src/main/java/net/minecraft/server/EntityHuman.java
++++ b/src/main/java/net/minecraft/server/EntityHuman.java
+@@ -21,6 +21,7 @@ import org.bukkit.event.player.PlayerItemConsumeEvent;
+ import org.bukkit.event.player.PlayerVelocityEvent;
+ // CraftBukkit end
+ import org.spigotmc.ProtocolData; // Spigot - protocol patch
++import org.spigotmc.SpigotConfig;
+ 
+ public abstract class EntityHuman extends EntityLiving implements ICommandListener {
+ 
+@@ -959,7 +960,12 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
+ 
+                     if (flag2) {
+                         if (i > 0) {
+-                            entity.g((double) (-MathHelper.sin(this.yaw * 3.1415927F / 180.0F) * (float) i * 0.5F), 0.1D, (double) (MathHelper.cos(this.yaw * 3.1415927F / 180.0F) * (float) i * 0.5F));
++                            // Kohi start - configurable knockback
++                            entity.g(
++                                    (double) (-MathHelper.sin(this.yaw * 3.1415927F / 180.0F) * (float) i * SpigotConfig.knockbackExtraHorizontal),
++                                    SpigotConfig.knockbackExtraVertical,
++                                    (double) (MathHelper.cos(this.yaw * 3.1415927F / 180.0F) * (float) i * SpigotConfig.knockbackExtraHorizontal));
++                            // Kohi end
+                             this.motX *= 0.6D;
+                             this.motZ *= 0.6D;
+                             this.setSprinting(false);
+diff --git a/src/main/java/net/minecraft/server/EntityLiving.java b/src/main/java/net/minecraft/server/EntityLiving.java
+index 63d22ad..9acf58d 100644
+--- a/src/main/java/net/minecraft/server/EntityLiving.java
++++ b/src/main/java/net/minecraft/server/EntityLiving.java
+@@ -18,6 +18,7 @@ import org.bukkit.event.entity.EntityRegainHealthEvent;
+ // CraftBukkit end
+ 
+ import org.bukkit.craftbukkit.SpigotTimings; // Spigot
++import org.spigotmc.SpigotConfig;
+ 
+ public abstract class EntityLiving extends Entity {
+ 
+@@ -831,18 +832,21 @@ public abstract class EntityLiving extends Entity {
+     public void a(Entity entity, float f, double d0, double d1) {
+         if (this.random.nextDouble() >= this.getAttributeInstance(GenericAttributes.c).getValue()) {
+             this.al = true;
+-            float f1 = MathHelper.sqrt(d0 * d0 + d1 * d1);
+-            float f2 = 0.4F;
+-
+-            this.motX /= 2.0D;
+-            this.motY /= 2.0D;
+-            this.motZ /= 2.0D;
+-            this.motX -= d0 / (double) f1 * (double) f2;
+-            this.motY += (double) f2;
+-            this.motZ -= d1 / (double) f1 * (double) f2;
+-            if (this.motY > 0.4000000059604645D) {
+-                this.motY = 0.4000000059604645D;
++            // Kohi start - configurable knockback
++            double magnitude = MathHelper.sqrt(d0 * d0 + d1 * d1);
++
++            this.motX /= SpigotConfig.knockbackFriction;
++            this.motY /= SpigotConfig.knockbackFriction;
++            this.motZ /= SpigotConfig.knockbackFriction;
++
++            this.motX -= d0 / magnitude * SpigotConfig.knockbackHorizontal;
++            this.motY += SpigotConfig.knockbackVertical;
++            this.motZ -= d1 / magnitude * SpigotConfig.knockbackHorizontal;
++
++            if (this.motY > SpigotConfig.knockbackVerticalLimit) {
++                this.motY = SpigotConfig.knockbackVerticalLimit;
+             }
++            // Kohi end
+         }
+     }
+ 
